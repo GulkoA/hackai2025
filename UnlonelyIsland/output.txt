@@ -1,1 +1,5 @@
-Hello, this is a sample text written to the file.
+[Debug Updater]_
+Cube_
+kjsdhf_
+Main Camera_
+Directional Light_
