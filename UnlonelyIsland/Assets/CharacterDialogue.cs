@@ -9,7 +9,7 @@ public class CharacterDialogue : MonoBehaviour
     {
         // Instantiate the speech bubble and set the target
         GameObject speechBubble = Instantiate(speechBubblePrefab, transform.position, Quaternion.identity);
-        speechBubble.transform.parent = this.gameObject.transform;
+        speechBubble.transform.SetParent(this.transform, false);
         speechBubbleController = speechBubble.GetComponent<SpeechBubbleController>();
         speechBubbleController.target = transform;
     }
