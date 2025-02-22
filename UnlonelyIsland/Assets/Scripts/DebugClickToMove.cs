@@ -15,9 +15,9 @@ public class DebugClickToMove : MonoBehaviour
         agent = GetComponent<NavMeshAgent>();
 
         //1, 2, 3, for housing, shopping, hill options to raycast to.
-        housingArea = new Vector3(4.15f, 4.28f, -8.94f);
-        market = new Vector3(-17.50f, 8.09f, -9.73f);
-        dock = new Vector3(-46.64f, 3.33f, -11.94f);
+        housingArea = new Vector3(407.20f, 248.40f, 0.00f);
+        market = new Vector3(536.00f, 370.80f, 0.00f);
+        dock = new Vector3(836.00f, 382.00f, 0.00f);
     }
 
     void Update()
@@ -25,13 +25,14 @@ public class DebugClickToMove : MonoBehaviour
         Ray ray;
         RaycastHit hit;
 
+
+
         if (Input.GetKeyDown(KeyCode.Alpha1))
         {
             ray = Camera.main.ScreenPointToRay(housingArea);
             if (Physics.Raycast(ray, out hit))
             {
                 agent.SetDestination(hit.point);
-                Debug.Log("Hit! "+ hit.point);
             }
         }
         else if (Input.GetKeyDown(KeyCode.Alpha2))
@@ -51,6 +52,6 @@ public class DebugClickToMove : MonoBehaviour
             }
         }
 
-        
+
     }
 }
