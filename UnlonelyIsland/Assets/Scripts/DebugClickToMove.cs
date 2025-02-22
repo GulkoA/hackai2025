@@ -9,6 +9,7 @@ public class DebugClickToMove : MonoBehaviour
     private Vector3 dock;
 
     private NavMeshAgent agent;
+    [SerializeField] private Animator animator;
 
     void Start()
     {
@@ -33,6 +34,14 @@ public class DebugClickToMove : MonoBehaviour
             if (Physics.Raycast(ray, out hit))
             {
                 agent.SetDestination(hit.point);
+                animator.SetTrigger("tWalk");
+            }
+        }
+        if (!agent.pathPending && agent.remainingDistance <= agent.stoppingDistance)
+        {
+            if (!agent.hasPath || agent.velocity.sqrMagnitude == 0f)
+            {
+                animator.SetTrigger("tIdle");
             }
         }
         else if (Input.GetKeyDown(KeyCode.Alpha2))

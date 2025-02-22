@@ -8,17 +8,17 @@ public class SpeechBubbleController : MonoBehaviour
 
     void Update()
     {
-        // Make the speech bubble face the camera
         transform.LookAt(Camera.main.transform);
 
-        // Position the speech bubble above the target
-        Vector3 screenPosition = Camera.main.WorldToScreenPoint(target.position);
-        transform.position = screenPosition + new Vector3(0, 1, 0); // Adjust the offset as needed
+        Vector3 worldPosition = target.position + new Vector3(0, 2.0f, 0); // Adjust the y-offset as needed
+        Vector3 screenPosition = Camera.main.WorldToScreenPoint(worldPosition);
+
+        transform.position = Camera.main.ScreenToWorldPoint(new Vector3(screenPosition.x, screenPosition.y, screenPosition.z));
     }
 
     public void SetDialogue(string dialogue)
     {
         dialogueText.text = dialogue;
-
     }
 }
+    
