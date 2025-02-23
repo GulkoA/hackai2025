@@ -27,7 +27,7 @@ public class AgentManager : MonoBehaviour
                 if (aa != null)
                 {
                     Debug.Log("interpreting data");
-                    aa.InterpretData(command);
+                    aa.InterpretData(command, parameters);
                 }
             });
 

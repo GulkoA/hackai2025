@@ -16,7 +16,8 @@ def start_server():
         print(f"Connected by {addr}")
         data = {
             "id": 0,
-            "destination": "housing"
+            "command": "start_conversation",
+            "parameters": "Hey! This is a test!"
         }
         message = json.dumps(data)
         conn.sendall(message.encode())
