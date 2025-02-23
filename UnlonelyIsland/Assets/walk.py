@@ -2,11 +2,10 @@ import UnityEngine
 from UnityEngine import Debug, GameObject
 
 
-def walk():
+def walk(id, destination):
   # Find all GameObjects in the scene
   all_objects = UnityEngine.Object.FindObjectsOfType(UnityEngine.GameObject)
   for go in all_objects:
-
     # Check if the object is named 'some guy_'
     if go.name == "some guy":
       # Get the NavMeshAgent component
@@ -20,20 +19,29 @@ def walk():
         move_increment = 10  # Distance to move per step
         steps = 10  # Number of steps
 
-        # Move the agent up incrementally
-        for _ in range(steps):
-          move_increment += 10
-          target_position = UnityEngine.Vector3(go.transform.position.x - 30, position_y, go.transform.position.z)
-
-          # Set the destination
+        if destination == "housingArea":
+          target_position = UnityEngine.Vector3(2.48, 4.28, -9.53)
           agent.SetDestination(target_position)
+          Debug.Log(f"Moving 'some guy' to Housing Area at position: {target_position}")
 
-          # Log the position change
-          Debug.Log(f"Moving 'some guy' to position: {target_position}")
+        elif destination == "market":
+          target_position = UnityEngine.Vector3(-17.03, 8.09, -10.14)
+          agent.SetDestination(target_position)
+          Debug.Log(f"Moving 'some guy' to Market at position: {target_position}")
 
-          # Wait for the next frame
-          UnityEngine.YieldInstruction()
+        elif destination == "dock":
+          target_position = UnityEngine.Vector3(-47.63, 3.32, -10.69)
+          agent.SetDestination(target_position)
+          Debug.Log(f"Moving 'some guy' to Dock at position: {target_position}")
+
+        elif destination == "farm":
+          target_position = UnityEngine.Vector3(26.37, 4.21, 22.57)
+          agent.SetDestination(target_position)
+          Debug.Log(f"Moving 'some guy' to Farm at position: {target_position}")
+
+        else:
+          Debug.Log("Invalid destination provided.")
       else:
         Debug.Log("No NavMeshAgent found on 'some guy'")
 
-walk()
+walk(0, "housingArea")
