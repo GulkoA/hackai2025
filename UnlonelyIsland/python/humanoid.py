@@ -2,6 +2,7 @@ from ollama import ChatResponse, chat
 import rich
 from pydantic import BaseModel
 import numpy as np
+import dbm
 
 locations_descriptions = {
     'dock': 'Walk to the fishing dock where you can catch fish',
@@ -22,8 +23,22 @@ class Action(BaseModel):
     mood: str
 
 class Humanoid():
-    def __init__(self, model: str, name, occupation):
+    def __init__(self, model: str, id: str, name="", occupation=""):
+        with dbm.open("humanoid.db", "c") as db:
+            if id in db:
+                if 'running' in db[id] and db[id]['running'] == True:
+                    raise ValueError(f"Humanoid {id} is already running, cannot run the same humanoid twice.")
+                # self.load(db[id])
+            else:
+                self.init(id, name, occupation)
+                # self.save(db)
+
+            # db[id]['running'] = True
+
         self.model = model
+
+    def init(self, id, name, occupation):
+        self.id = id
         self.name = name
         self.occupation = occupation
         self.personality_vector = np.random.rand(5)
@@ -34,6 +49,7 @@ class Humanoid():
         self.inventory = {
             'fish': 0,
             'tomatoes': 0,
+            'meals': 0,
             'gold': 100,
         }
         self.location = 'farm'
@@ -53,9 +69,38 @@ class Humanoid():
             'conversation': [],
         }
 
+    def save(self, db):
+        db[self.id] = {
+            'name': self.name,
+            'occupation': self.occupation,
+            'personality_vector': self.personality_vector,
+            'vitals': self.vitals,
+            'inventory': self.inventory,
+            'location': self.location,
+            'relations_summary': self.relations_summary,
+            'lifetime_summary': self.lifetime_summary,
+            'yesterday_summary': self.yesterday_summary,
+        }
+
+    def load(self, data):
+        self.name = data['name']
+        self.occupation = data['occupation']
+        self.personality_vector = data['personality_vector']
+        self.vitals = data['vitals']
+        self.inventory = data['inventory']
+        self.location = data['location']
+        self.relations_summary = data['relations_summary']
+        self.lifetime_summary = data['lifetime_summary']
+        self.yesterday_summary = data['yesterday_summary']
+
+    def quit(self):
+        with dbm.open("humanoid.db", "c") as db:
+            db[self.id]['running'] = False
+            self.save(db)
+
     def summary_prompt(self):
         return f"""
-        You are {self.name}, a {self.occupation} on the mechanical island. You can walk, interact with other humanoids, and trade fish, tomatoes, and buy food at the market. Your goal is to survive and thrive on the island.
+        You are {self.name}, a {self.occupation} on the mechanical island. You can walk, interact with other humanoids, and trade fish, tomatoes, and buy food at the market. You CANNOT eat raw fish or tomatoes, only cooked meals. Your goal is to survive and thrive on the island.
         You have {self.inventory['fish']} fish, {self.inventory['tomatoes']} tomatoes, and {self.inventory['gold']} gold.
         You are at the {self.location}.
         Your hunger: {self.vitals['hunger']} (you are {1 - self.vitals['hunger']} full)
@@ -119,5 +164,7 @@ class Humanoid():
             print('Performing action:', action_data.action)
         except Exception as e:
             print('Invalid action format in response:', response.message.content, e)
+
+        # self.quit()
 
         return action_data

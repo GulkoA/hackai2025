@@ -76,3 +76,5 @@ crashlytics-build.properties
 .vsconfig
 
 */*/__pycache__
+
+*/*/*humanoid.db
