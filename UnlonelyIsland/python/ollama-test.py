@@ -1,4 +1,4 @@
-from humanoid import Humanoid
+from humanoid import Humanoid, Context
 
 agent = Humanoid(
   model='deepseek-r1',
@@ -7,4 +7,23 @@ agent = Humanoid(
   occupation='farmer',
 )
 
-agent.select_action("What would you like to do next?", actions_available=[], conversations_available=[])
+ctx = Context(
+  inventory={
+    "fish": 0,
+    "tomatoes": 0,
+    "meals": 0,
+    "gold": 0
+  },
+  vitals={
+    "hunger": 0,
+    "stamina": 1
+  },
+  location='housing',
+  agents_nearby=[],
+  actions_available=[]
+)
+
+agent.prompt_agent_action(ctx)
+
+ctx.location = 'dock'
+agent.prompt_agent_action(ctx)
