@@ -26,7 +26,7 @@ public class DebugClickToMove : MonoBehaviour
         }
         if (!agent.pathPending && agent.remainingDistance <= agent.stoppingDistance)
         {
-            if (!agent.hasPath || agent.velocity.sqrMagnitude == 0f)
+            if (!agent.hasPath || agent.velocity.sqrMagnitude < 0.1f)
             {
                 animator.SetTrigger("tIdle");
             }
