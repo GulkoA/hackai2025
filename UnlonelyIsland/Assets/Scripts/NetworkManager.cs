@@ -10,6 +10,7 @@ using UnityEngine;
 
 public class NetworkManager : MonoBehaviour
 {
+    public static NetworkManager Instance { get; private set; }
     private Process pythonServerProcess;
     private TcpClient client;
     private NetworkStream stream;
@@ -19,6 +20,19 @@ public class NetworkManager : MonoBehaviour
     {
         StartPythonServer();
         ConnectToServer();
+    }
+
+    private void Awake()
+    {
+        if (Instance == null)
+        {
+            Instance = this;
+            DontDestroyOnLoad(gameObject);
+        }
+        else
+        {
+            Destroy(gameObject);
+        }
     }
 
     void StartPythonServer()
@@ -77,6 +91,12 @@ public class NetworkManager : MonoBehaviour
             byte[] data = Encoding.ASCII.GetBytes(message);
             stream.Write(data, 0, data.Length);
             UnityEngine.Debug.Log("Message sent: " + message);
+        }
+    }
+    public void SendAction(string context) {
+        if (stream != null) {
+            byte[] data = Encoding.ASCII.GetBytes(context);
+            stream.Write(data, 0, data.Length);
         }
     }
 
