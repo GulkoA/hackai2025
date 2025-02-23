@@ -5,6 +5,9 @@ TagManager:
   serializedVersion: 3
   tags:
   - Farm
+  - House
+  - Market
+  - Dock
   layers:
   - Default
   - TransparentFX

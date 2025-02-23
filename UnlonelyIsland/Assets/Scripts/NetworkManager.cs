@@ -1,9 +1,11 @@
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Net.Sockets;
 using System.Text;
 using System.Threading;
+using NUnit.Framework;
 using UnityEngine;
 
 public class NetworkManager : MonoBehaviour
@@ -11,6 +13,7 @@ public class NetworkManager : MonoBehaviour
     private Process pythonServerProcess;
     private TcpClient client;
     private NetworkStream stream;
+    private Thread receiveThread;
 
     void Start()
     {
@@ -23,8 +26,8 @@ public class NetworkManager : MonoBehaviour
         try
         {
             pythonServerProcess = new Process();
-            pythonServerProcess.StartInfo.FileName = "python";
-            pythonServerProcess.StartInfo.Arguments = Application.dataPath + "/Scripts/network.py"; // Update path accordingly
+            pythonServerProcess.StartInfo.FileName = "python"; // Update with the full path to your Python executable
+            pythonServerProcess.StartInfo.Arguments = Application.streamingAssetsPath + "/Scripts/network.py"; // Update path accordingly
             pythonServerProcess.StartInfo.UseShellExecute = false;
             pythonServerProcess.StartInfo.RedirectStandardOutput = true;
             pythonServerProcess.StartInfo.RedirectStandardError = true;
@@ -39,6 +42,7 @@ public class NetworkManager : MonoBehaviour
         catch (Exception e)
         {
             UnityEngine.Debug.LogError($"Failed to start Python server: {e.Message}");
+            Application.Quit();
         }
     }
 
@@ -50,6 +54,11 @@ public class NetworkManager : MonoBehaviour
             client = new TcpClient("localhost", 12345);
             stream = client.GetStream();
             UnityEngine.Debug.Log("Connected to server");
+
+            // Start a separate thread to handle incoming messages from the server
+            receiveThread = new Thread(ReceiveMessages);
+            receiveThread.IsBackground = true;
+            receiveThread.Start();
 
             // Example: Send a message to the server
             SendMessage("Hello from Unity");
@@ -68,11 +77,35 @@ public class NetworkManager : MonoBehaviour
             byte[] data = Encoding.ASCII.GetBytes(message);
             stream.Write(data, 0, data.Length);
             UnityEngine.Debug.Log("Message sent: " + message);
+        }
+    }
 
-            // Example: Read response from the server
-            byte[] responseData = new byte[1024];
-            int bytes = stream.Read(responseData, 0, responseData.Length);
-            UnityEngine.Debug.Log("Received: " + Encoding.ASCII.GetString(responseData, 0, bytes));
+    void ReceiveMessages()
+    {
+        try
+        {
+            byte[] buffer = new byte[1024];
+            while (client.Connected)
+            {
+                int bytesRead = stream.Read(buffer, 0, buffer.Length);
+                if (bytesRead > 0)
+                {
+                    string message = Encoding.ASCII.GetString(buffer, 0, bytesRead);
+
+                    // Parse the JSON message
+                    Data data = JsonUtility.FromJson<Data>(message);
+
+                    // Use the parsed data
+                    AgentManager.Instance.DistributeToAgent(data.id, data.command, data.parameters); // Assuming you want to pass the id
+
+                    UnityEngine.Debug.Log($"Received: {message}");
+                    UnityEngine.Debug.Log($"ID: {data.id}, Destination: {data.command}");
+                }
+            }
+        }
+        catch (Exception e)
+        {
+            UnityEngine.Debug.LogError($"Receive error: {e.Message}");
         }
     }
 
@@ -80,10 +113,19 @@ public class NetworkManager : MonoBehaviour
     {
         stream?.Close();
         client?.Close();
+        receiveThread?.Abort();
 
         if (pythonServerProcess != null && !pythonServerProcess.HasExited)
         {
             pythonServerProcess.Kill();
         }
     }
+}
+
+[Serializable]
+public class Data
+{
+    public int id;
+    public string command;
+    public string parameters;
 }

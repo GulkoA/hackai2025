@@ -15,7 +15,12 @@ def start_server():
     try:
         conn, addr = server_socket.accept()
         print(f"Connected by {addr}")
-
+        data = {
+            "id": 0,
+            "destination": "housing"
+        }
+        message = json.dumps(data)
+        conn.sendall(message.encode())
         while True:
             data = conn.recv(1024)
             if not data:
