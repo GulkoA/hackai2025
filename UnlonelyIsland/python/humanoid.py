@@ -302,17 +302,17 @@ class Humanoid():
         # return conversation_data
 
     def generate_character_context(self):
-        
+        conversation_data = {}
         response: ChatResponse = chat(
             model=self.ai_model,
-            messages=[f'You are {self.name} who works as {self.occupation}. Based on the OCEAN personality model(the Big Five personality traits) your openness:{self.personality_vector[0]}, conscientiousness:{self.personality_vector[1]}, extraversion:{self.personality_vector[2]}, agreeableness:{self.personality_vector[3]}, and neuroticism:{self.personality_vector[4]}. Give a physcological portret for you.'],
+            messages=[{'role':'user', 'content':f'You are {self.name} who works as {self.occupation}. Based on the OCEAN personality model(the Big Five personality traits) your openness:{self.personality_vector[0]}, conscientiousness:{self.personality_vector[1]}, extraversion:{self.personality_vector[2]}, agreeableness:{self.personality_vector[3]}, and neuroticism:{self.personality_vector[4]}. Give a physcological portret for you. Your response should not exceed 250 words and should be description of your current mood. Your response should be in the 2nd view, e.g. istead of \'I\' use \'you\'. Try to give context for another model.'}],
         )
 
         try:
-            conversation_data = PsycologicalPortrait.model_validate_json(response.message.content)
-            print(f"Model feels {conversation_data.mood}")
+            # conversation_data = PsycologicalPortrait.model_validate_json(response.message.content)
+            print(f"Model feels {response.message.content}")
         except Exception as e:
             print('Invalid conversation format in response:', response.message.content, e)
 
-        return conversation_data
+        return response.message.content
     
