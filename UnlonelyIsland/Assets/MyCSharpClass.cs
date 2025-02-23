@@ -8,6 +8,9 @@ public class Menu_Item_Hello_Class : MonoBehaviour
     // static void RunEnsureNaming()
     void Start()
     {
-        PythonRunner.RunFile($"{Application.dataPath}/ensure_naming.py");
+        
+    }
+    void Awake() {
+        PythonRunner.RunFile($"{Application.dataPath}/walk.py");
     }
 }
