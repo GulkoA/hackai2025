@@ -276,7 +276,7 @@ class Humanoid():
 
         return conversation_data
   
-    def end_conversaton(self):
+    def end_conversation(self):
         """
         Finalize the conversation with the partner
         """

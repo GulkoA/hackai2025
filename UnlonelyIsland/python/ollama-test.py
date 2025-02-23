@@ -1,7 +1,7 @@
 from humanoid import Humanoid, Context
 
 agent = Humanoid(
-  model='deepseek-r1',
+  ai_model='deepseek-r1',
   id='steeve',
   name='Steeve',
   occupation='farmer',

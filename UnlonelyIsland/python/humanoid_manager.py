@@ -17,3 +17,6 @@ class HumanoidManager():
     receive = Inventory.model_validate_json(trade_receive)
     return self.humanoids[id].prompt_agent_conversation(partner_name, phrase, context, offer, receive)
   
+  def end_conversation(self, id, ctx):
+    context = Context.model_validate(ctx)
+    return self.humanoids[id].end_conversation(context)
