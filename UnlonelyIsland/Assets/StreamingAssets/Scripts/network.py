@@ -1,4 +1,5 @@
 ﻿import socket
+import json
 
 def start_server():
     server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -13,13 +14,18 @@ def start_server():
     try:
         conn, addr = server_socket.accept()
         print(f"Connected by {addr}")
-
+        data = {
+            "id": 0,
+            "command": "start_conversation",
+            "parameters": "Hey! This is a test!"
+        }
+        message = json.dumps(data)
+        conn.sendall(message.encode())
         while True:
             data = conn.recv(1024)
             if not data:
                 break
             print(f"Received: {data.decode()}")
-            conn.sendall(data)  # Echo back the received data
     except Exception as e:
         print(f"Server error: {e}")
     finally:

@@ -1,4 +1,3 @@
-using Mono.Cecil;
 using UnityEngine;
 using UnityEngine.AI;
 
@@ -42,20 +41,6 @@ public class DebugClickToMove : MonoBehaviour
         else if (Input.GetKeyDown(KeyCode.Alpha4))
         {
             agent.SetDestination(farm);
-        }
-    }
-    private void OnTriggerEnter(Collider other)
-    {
-        if (other.tag == "Farm")
-        {
-            animator.SetTrigger("tPerform");
-        }
-    }
-    private void OnTriggerExit(Collider other)
-    {
-        if (other.tag == "Farm")
-        {
-            animator.SetTrigger("tIdle");
         }
     }
 }
