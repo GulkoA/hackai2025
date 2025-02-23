@@ -16,15 +16,21 @@ public class AgentManager : MonoBehaviour
             Destroy(gameObject);
         }
     }
-    public void DistributeToAgent(string data, int id)
+    public void DistributeToAgent(int id, string command, string parameters)
     {
         if (id < agentArray.Length)
         {
-            AgentActions aa = agentArray[id].GetComponent<AgentActions>();
-            if (aa is not null)
+            Debug.Log("distributing data");
+            MainThreadDispatcher.Enqueue(() =>
             {
-                aa.InterpretData(data);
-            }
+                AgentActions aa = agentArray[id].GetComponent<AgentActions>();
+                if (aa != null)
+                {
+                    Debug.Log("interpreting data");
+                    aa.InterpretData(command);
+                }
+            });
+
         }
     }
 }

@@ -1,12 +1,17 @@
 using System.Collections;
 using UnityEngine;
+using UnityEngine.AI;
 
 public class AgentActions : MonoBehaviour
 {
     [SerializeField] private Animator animator;
     public void InterpretData(string data)
     {
-
+        if (data.Equals("housing"))
+        {
+            NavMeshAgent agent = GetComponent<NavMeshAgent>();
+            agent.SetDestination(new Vector3(2.48f, 4.28f, -9.53f));
+        }
     }
     private void OnTriggerEnter(Collider other)
     {
