@@ -10,7 +10,8 @@ public class Menu_Item_Hello_Class : MonoBehaviour
     {
         
     }
-    void Awake() {
+    void Awake() 
+    {
         PythonRunner.RunFile($"{Application.dataPath}/Controllers/walk.py");
     }
 }
