@@ -22,4 +22,8 @@ ctx = Context(
   agents_nearby=[],
   actions_available=[]
 )
+
+agent.prompt_agent_action(ctx)
+
+ctx.location = 'dock'
 agent.prompt_agent_action(ctx)

@@ -23,17 +23,27 @@ class Action(BaseModel):
     intention: str
     mood: str
 
+class Inventory(BaseModel):
+    fish: int
+    tomatoes: int
+    meals: int
+    gold: int
+
+class Vitals(BaseModel):
+    hunger: int
+    stamina: int
+
+class Conversation(BaseModel):
+    content: str
+    mood: str
+    action: str
+    trade_offer: Inventory
+    trade_receive: Inventory
+
+
 class Context(BaseModel):
-    inventory: dict[str, int] = {
-        "fish": 0,
-        "tomatoes": 0,
-        "meals": 0,
-        "gold": 0
-    }
-    vitals: dict[str, int] = {
-        "hunger": 0,
-        "stamina": 0
-    }
+    inventory: Inventory
+    vitals: Vitals
     location: str
     agents_nearby: list[int]
     actions_available: list[str]
@@ -61,71 +71,194 @@ class Humanoid():
             'conversation': [],
         }
 
-
-    def summary_prompt(self, context: Context):
-        return f"""
-        You are {self.name}, a {self.occupation} on the mechanical island. You can walk, interact with other humanoids, and trade fish, tomatoes, and buy food at the market. You CANNOT eat raw fish or tomatoes, only cooked meals. Your goal is to survive and thrive on the island.
-        You have {context.inventory['fish']} fish, {context.inventory['tomatoes']} tomatoes, and {context.inventory['gold']} gold. THERE ARE NO OTHER RESOURCES AVAILABLE.
-        You are at the {context.location}.
-        Your hunger: {context.vitals['hunger']} (you are {100 - context.vitals['hunger'] * 100}% full)
-        Your stamina: {context.vitals['stamina']} (you are {context.vitals['stamina'] * 100}% energetic)
-
-        Lifetime: {self.lifetime_summary}
-        Yesterday: {self.yesterday_summary}
-        Relations: {self.relations_summary}
+    def prompt_agent_action(self, context: Context):
+        """
+        Prompt agent to generate the next action
         """
 
-    def generate_action_format(self, actions_available, conversations_available):
-        available_action_descriptions = {}
-        for location, description in locations_descriptions.items():
-            available_action_descriptions[f"walk_to_{location}"] = description
-        for conversation in conversations_available:
-            available_action_descriptions[f"start_conversation_{conversation}"] = f"Start a conversation with {conversation}"
-        for action in actions_available:
-            available_action_descriptions[action] = action
+        def summary_prompt(context: Context):
+            return f"""
+            You are {self.name}, a {self.occupation} on the mechanical island. You can walk, interact with other humanoids, and trade fish, tomatoes, and buy food at the market. You CANNOT eat raw fish or tomatoes, only cooked meals. Your goal is to survive and thrive on the island.
+            You have {context.inventory.fish} fish, {context.inventory.tomatoes} tomatoes, and {context.inventory.gold} gold. THERE ARE NO OTHER RESOURCES AVAILABLE.
+            Your hunger: {context.vitals.hunger} (you are {100 - context.vitals.hunger * 100}% full)
+            Your stamina: {context.vitals.stamina} (you are {context.vitals.stamina * 100}% energetic)
 
-        return {
-            "type": "object",
-            "properties": {
-                "action": {
-                    "type": "string",
-                    "enum": list(available_action_descriptions.keys()),
-                    "description": "\n".join([f"- {k}: {v}" for k, v in available_action_descriptions.items()]),
-                },
-                "intention": {
-                    "type": "string",
-                    "description": "Why did you decide to do this action? Be as descriptive and specific as possible.",
-                    "minLength": 25,
-                },
-                "mood": {
-                    "type": "string",
-                    "description": "How does this situation make you feel?",
-                    "enum": ["happy", "sad", "angry", "neutral"],
-                }
-            },
-            "required": ["intention", "mood", "action"],
-            "additionalProperties": False,
-        }
+            Lifetime: {self.lifetime_summary}
+            Yesterday: {self.yesterday_summary}
+            Relations: {self.relations_summary}
 
-    def prompt_agent_action(self, context: Context):
+            You are at the {context.location}. Decide what to do next based on your personality.
+            """
+        
+        def generate_action_format(actions_available, conversations_available):
+            actions = {}
+            for location, description in locations_descriptions.items():
+                actions[f"walk_to_{location}"] = description
+            for conversation in conversations_available:
+                actions[f"start_conversation_{conversation}"] = f"Start a conversation with {conversation}"
+            for action in actions_available:
+                actions[action] = action_descriptions[action]
+
+            return {
+                "type": "object",
+                "properties": {
+                    "action": {
+                        "type": "string",
+                        "enum": list(actions.keys()),
+                        "description": "\n".join([f"- {k}: {v}" for k, v in actions.items()]),
+                    },
+                    "intention": {
+                        "type": "string",
+                        "description": "Why did you decide to do this action? Be as descriptive and specific as possible. Use verbal informal natural language",
+                        "minLength": 25,
+                    },
+                    "mood": {
+                        "type": "string",
+                        "description": "How does this situation make you feel?",
+                        "enum": ["happy", "sad", "angry", "neutral"],
+                    }
+                },
+                "required": ["intention", "mood", "action"],
+                "additionalProperties": False,
+            }
+
+
         messages = [
             *self.history['actions'],
-            {'role': 'system', 'content': self.summary_prompt(context)},
-            {'role': 'user', 'content': "What would you like to do next? Please select the best action per your personality."},
+            {'role': 'system', 'content': summary_prompt(context)},
         ]
 
         response: ChatResponse = chat(
             model=self.model,
             messages=messages,
-            format=self.generate_action_format(context.actions_available, context.agents_nearby),
+            format=generate_action_format(context.actions_available, context.agents_nearby),
         )
 
         try:
             action_data = Action.model_validate_json(response.message.content)
-            print('Intention:', action_data.intention)
-            print('Mood:', action_data.mood)
-            print('Performing action:', action_data.action)
+            print(f"Model decided to {action_data.action} because {action_data.intention} and feels {action_data.mood}")
         except Exception as e:
             print('Invalid action format in response:', response.message.content, e)
 
+        self.history['actions'].append({
+            'role': 'assistant',
+            'content': f"I decided to {action_data.action} because {action_data.intention}",
+        })
+
         return action_data
+
+    def prompt_agent_conversation(self, partner_name: str, ctx: dict, trade_offer: Inventory, trade_receive: Inventory):
+        """
+        Prompt agent to generate next phrase in a conversation
+        Only applicable when conversation is running
+        """
+
+        def summary_prompt(ctx: dict):
+            return f"""
+            You are {self.name}, a {self.occupation} on the mechanical island. You can walk, interact with other humanoids, and trade fish, tomatoes, and buy food at the market. You CANNOT eat raw fish or tomatoes, only cooked meals. Your goal is to survive and thrive on the island.
+            You have {ctx['inventory']['fish']} fish, {ctx['inventory']['tomatoes']} tomatoes, and {ctx['inventory']['gold']} gold. THERE ARE NO OTHER RESOURCES AVAILABLE.
+            Your hunger: {ctx['vitals']['hunger']} (you are {100 - ctx['vitals']['hunger'] * 100}% full)
+            Your stamina: {ctx['vitals']['stamina']} (you are {ctx['vitals']['stamina'] * 100}% energetic)
+
+            Lifetime: {self.lifetime_summary}
+            Yesterday: {self.yesterday_summary}
+            Relations: {self.relations_summary}
+            
+            You are at the {ctx['location']} conversing with {str}. Decide what to say next based on your personality.
+            """
+        
+        def generate_conversation_format(inventory: Inventory):
+            return {
+                "type": "object",
+                "properties": {
+                    "content": {
+                        "type": "string",
+                        "description": "What do you want to say to the other person?",
+                        "minLength": 25,
+                    },
+                    "mood": {
+                        "type": "string",
+                        "description": "How does this situation make you feel?",
+                        "enum": ["happy", "sad", "angry", "neutral"],
+                    },
+                    "action": {
+                        "type": "string",
+                        "enum": ["accept_trade", "reject_trade", "end_conversation", "continue_conversation"],
+                        "description": "- accept_trade: Accept the trade offer\n- reject_trade: Reject the trade offer",
+                    },
+                    "trade_offer": {
+                        "type": "object",
+                        "properties": {
+                            "fish": {
+                                "type": "integer",
+                                "minimum": 0,
+                                "maximum": inventory['fish'],
+                            },
+                            "tomatoes": {
+                                "type": "integer",
+                                "minimum": 0,
+                                "maximum": inventory['tomatoes'],
+                            },
+                            "meals":{
+                                "type": "integer",
+                                "minimum": 0,
+                                "maximum": inventory['meals'],
+                            },
+                            "gold": {
+                                "type": "integer",
+                                "minimum": 0,
+                                "maximum": trade_offer['gold'],
+                            },
+                        },
+                        "required": [],
+                        "additionalProperties": False,
+                    },
+                    "trade_receive": {
+                        "type": "object",
+                        "properties": {
+                            "fish": {
+                                "type": "integer",
+                                "minimum": 0,
+                            },
+                            "tomatoes": {
+                                "type": "integer",
+                                "minimum": 0,
+                            },
+                            "meals":{
+                                "type": "integer",
+                                "minimum": 0,
+                            },
+                            "gold": {
+                                "type": "integer",
+                                "minimum": 0,
+                            },
+                        },
+                        "required": [],
+                        "additionalProperties": False,
+                    },
+                },
+                "required": ["content", "intention", "mood", "action"],
+                "additionalProperties": False,
+            }
+
+        messages = [
+            *self.history['conversation'],
+            {'role': 'system', 'content': summary_prompt(ctx)},
+        ]
+
+        response: ChatResponse = chat(
+            model=self.model,
+            messages=messages,
+            format=generate_conversation_format(ctx.inventory),
+        )
+
+        try:
+            conversation_data = Conversation.model_validate_json(response.message.content)
+            print('Intention:', conversation_data.intention)
+            print('Mood:', conversation_data.mood)
+            print('Performing action:', conversation_data.action)
+        except Exception as e:
+            print('Invalid conversation format in response:', response.message.content, e)
+
+        return conversation_data
+  
