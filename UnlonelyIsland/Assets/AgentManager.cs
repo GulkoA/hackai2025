@@ -49,7 +49,7 @@ public class AgentManager : MonoBehaviour
                 if (aa != null)
                 {
                     Debug.Log("Interpreting data...");
-                    aa.InterpretData(command, parameters);  // Pass the JSON string as parameters
+                    aa.InterpretData(command);
                 }
                 else
                 {
