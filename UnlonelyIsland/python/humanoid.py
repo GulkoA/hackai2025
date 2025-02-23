@@ -315,3 +315,4 @@ class Humanoid():
             print('Invalid conversation format in response:', response.message.content, e)
 
         return conversation_data
+    

@@ -46,8 +46,8 @@ public class NetworkManager : MonoBehaviour
             pythonServerProcess.StartInfo.RedirectStandardOutput = true;
             pythonServerProcess.StartInfo.RedirectStandardError = true;
             pythonServerProcess.StartInfo.CreateNoWindow = true;
-            pythonServerProcess.OutputDataReceived += (sender, args) => UnityEngine.Debug.Log("Python Server: " + args.Data);
-            pythonServerProcess.ErrorDataReceived += (sender, args) => UnityEngine.Debug.LogError("Python Server Error: " + args.Data);
+            // pythonServerProcess.OutputDataReceived += (sender, args) => UnityEngine.Debug.Log("Python Server: " + args.Data);
+            // pythonServerProcess.ErrorDataReceived += (sender, args) => UnityEngine.Debug.LogError("Python Server Error: " + args.Data);
             pythonServerProcess.Start();
             pythonServerProcess.BeginOutputReadLine();
             pythonServerProcess.BeginErrorReadLine();
