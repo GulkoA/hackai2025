@@ -6,7 +6,7 @@ def walk(id, destination):
   # Find all GameObjects in the scene
   all_objects = UnityEngine.Object.FindObjectsOfType(UnityEngine.GameObject)
   for go in all_objects:
-    # Check if the object is named 'some guy_'
+    # Check if the object is named 'some guy'
     if go.name == "some guy":
       # Get the NavMeshAgent component
       agent = go.GetComponent(UnityEngine.AI.NavMeshAgent)
@@ -42,4 +42,4 @@ def walk(id, destination):
       else:
         Debug.Log("No NavMeshAgent found on 'some guy'")
 
-walk(0, "housingArea")
+walk(0, "farm")
