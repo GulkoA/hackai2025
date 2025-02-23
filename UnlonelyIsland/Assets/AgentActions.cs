@@ -96,5 +96,6 @@ public class AgentActions : MonoBehaviour
                 default: break;
             }
         animator.SetTrigger("tIdle");
+        ai.packageJson();
     }
 }
