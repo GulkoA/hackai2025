@@ -99,7 +99,7 @@ class Humanoid():
             for location, description in locations_descriptions.items():
                 actions[f"walk_to_{location}"] = description
             for conversation in conversations_available:
-                actions[f"start_conversation_{conversation}"] = f"Start a conversation with {conversation}"
+                actions[f"talk_to_{conversation}"] = f"Start a conversation with {conversation}"
             for action in actions_available:
                 actions[action] = action_descriptions[action]
 
