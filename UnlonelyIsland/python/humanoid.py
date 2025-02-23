@@ -49,8 +49,8 @@ class Context(BaseModel):
     actions_available: list[str]
 
 class Humanoid():
-    def __init__(self, model: str, id: str, name: str, occupation: str):
-        self.model = model
+    def __init__(self, ai_model: str, id: str, name: str, occupation: str):
+        self.ai_model = ai_model
         self.id = id
         self.name = name
         self.occupation = occupation
@@ -70,6 +70,7 @@ class Humanoid():
             'actions': [],
             'conversation': [],
         }
+        self.partner = None
 
     def prompt_agent_action(self, context: Context):
         """
@@ -129,7 +130,7 @@ class Humanoid():
         ]
 
         response: ChatResponse = chat(
-            model=self.model,
+            model=self.ai_model,
             messages=messages,
             format=generate_action_format(context.actions_available, context.agents_nearby),
         )
@@ -147,27 +148,41 @@ class Humanoid():
 
         return action_data
 
-    def prompt_agent_conversation(self, partner_name: str, ctx: dict, trade_offer: Inventory, trade_receive: Inventory):
+    def prompt_agent_conversation(self, partner_name: str, phrase: str, ctx: Context, trade_offer: Inventory, trade_receive: Inventory):
         """
         Prompt agent to generate next phrase in a conversation
         Only applicable when conversation is running
+
+        Args:
+            partner_name: Name of the partner in the conversation
+            ctx: Context of the agent
+            trade_offer: Items offered to me
+            trade_receive: Items I will give in return
         """
 
         def summary_prompt(ctx: dict):
+            trade = ""
+            if sum(trade_offer.model_dump().values(), trade_receive.model_dump().values()) > 0:
+                trade = f"They offered a trade: {", ".join([f"{k}: {v}" for k, v in trade_offer.model_dump().items() if v > 0])} for {", ".join([f"{k}: {v}" for k, v in trade_receive.model_dump().items() if v > 0])}"
             return f"""
             You are {self.name}, a {self.occupation} on the mechanical island. You can walk, interact with other humanoids, and trade fish, tomatoes, and buy food at the market. You CANNOT eat raw fish or tomatoes, only cooked meals. Your goal is to survive and thrive on the island.
-            You have {ctx['inventory']['fish']} fish, {ctx['inventory']['tomatoes']} tomatoes, and {ctx['inventory']['gold']} gold. THERE ARE NO OTHER RESOURCES AVAILABLE.
-            Your hunger: {ctx['vitals']['hunger']} (you are {100 - ctx['vitals']['hunger'] * 100}% full)
-            Your stamina: {ctx['vitals']['stamina']} (you are {ctx['vitals']['stamina'] * 100}% energetic)
+            You have {ctx.inventory.fish} fish, {ctx.inventory.tomatoes} tomatoes, and {ctx.inventory.gold} gold. THERE ARE NO OTHER RESOURCES AVAILABLE.
+            Your hunger: {ctx.vitals.hunger} (you are {100 - ctx.vitals.hunger * 100}% full)
+            Your stamina: {ctx.vitals.stamina} (you are {ctx.vitals.stamina * 100}% energetic)
 
             Lifetime: {self.lifetime_summary}
             Yesterday: {self.yesterday_summary}
             Relations: {self.relations_summary}
             
-            You are at the {ctx['location']} conversing with {str}. Decide what to say next based on your personality.
+            You are at the {ctx['location']} conversing with {partner_name}. {trade} They said {phrase} Decide what to say next based on your personality.
             """
         
         def generate_conversation_format(inventory: Inventory):
+            actions = ["end_conversation", "continue_conversation"]
+            description = "End the conversation immediately or continue talking"
+            if sum(ctx.trade_offer.model_dump().values(), ctx.trade_receive.model_dump().values()) > 0:
+                actions.update(["accept_trade"])
+                description += " or accept the trade offer (note that accepting trade will stop the conversation)"
             return {
                 "type": "object",
                 "properties": {
@@ -183,8 +198,7 @@ class Humanoid():
                     },
                     "action": {
                         "type": "string",
-                        "enum": ["accept_trade", "reject_trade", "end_conversation", "continue_conversation"],
-                        "description": "- accept_trade: Accept the trade offer\n- reject_trade: Reject the trade offer",
+                        "enum": actions,
                     },
                     "trade_offer": {
                         "type": "object",
@@ -192,22 +206,22 @@ class Humanoid():
                             "fish": {
                                 "type": "integer",
                                 "minimum": 0,
-                                "maximum": inventory['fish'],
+                                "maximum": inventory.fish,
                             },
                             "tomatoes": {
                                 "type": "integer",
                                 "minimum": 0,
-                                "maximum": inventory['tomatoes'],
+                                "maximum": inventory.tomatoes,
                             },
                             "meals":{
                                 "type": "integer",
                                 "minimum": 0,
-                                "maximum": inventory['meals'],
+                                "maximum": inventory.meals,
                             },
                             "gold": {
                                 "type": "integer",
                                 "minimum": 0,
-                                "maximum": trade_offer['gold'],
+                                "maximum": inventory.gold,
                             },
                         },
                         "required": [],
@@ -240,6 +254,8 @@ class Humanoid():
                 "required": ["content", "intention", "mood", "action"],
                 "additionalProperties": False,
             }
+    
+        self.partner = partner_name
 
         messages = [
             *self.history['conversation'],
@@ -247,18 +263,37 @@ class Humanoid():
         ]
 
         response: ChatResponse = chat(
-            model=self.model,
+            model=self.ai_model,
             messages=messages,
             format=generate_conversation_format(ctx.inventory),
         )
 
         try:
             conversation_data = Conversation.model_validate_json(response.message.content)
-            print('Intention:', conversation_data.intention)
-            print('Mood:', conversation_data.mood)
-            print('Performing action:', conversation_data.action)
+            print(f"Model decided to say {conversation_data.content} and feels {conversation_data.mood}")
         except Exception as e:
             print('Invalid conversation format in response:', response.message.content, e)
 
         return conversation_data
   
+    def end_conversaton(self):
+        """
+        Finalize the conversation with the partner
+        """
+        summary_messages = [
+            *self.history['conversation'],
+            {'role': 'system', 'content': "The conversation has ended, make an executive summary of the conversation."},
+        ]
+        summary = chat(
+            model=self.ai_model,
+            messages=summary_messages,
+            format={"type": "object", "properties": {"summary": {"type": "string"}}},
+        )
+        self.history['conversation'] = []
+        print(f"Conversation ended with summary: {summary.message.content}")
+        self.history['actions'].append({
+            'role': 'assistant',
+            'content': f"The conversation with {self.partner} ended with summary: {summary.message.content}",
+        })
+
+        # return conversation_data
