@@ -16,10 +16,8 @@ def walk(id, destination):
         # Initial position and movement increment
         position_y = go.transform.position.y
         Debug.Log(f"Agent's position: {position_y}")
-        move_increment = 10  # Distance to move per step
-        steps = 10  # Number of steps
 
-        if destination == "housingArea":
+        if destination == "housing":
           target_position = UnityEngine.Vector3(2.48, 4.28, -9.53)
           agent.SetDestination(target_position)
           Debug.Log(f"Moving 'some guy' to Housing Area at position: {target_position}")

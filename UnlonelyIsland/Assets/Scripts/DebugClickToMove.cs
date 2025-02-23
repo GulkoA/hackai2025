@@ -26,8 +26,6 @@ public class DebugClickToMove : MonoBehaviour
         Ray ray;
         RaycastHit hit;
 
-
-
         if (Input.GetKeyDown(KeyCode.Alpha1))
         {
             ray = Camera.main.ScreenPointToRay(housingArea);
@@ -60,7 +58,6 @@ public class DebugClickToMove : MonoBehaviour
                 agent.SetDestination(hit.point);
             }
         }
-
 
     }
 }
