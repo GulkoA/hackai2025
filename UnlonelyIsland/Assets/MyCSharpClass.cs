@@ -11,6 +11,6 @@ public class Menu_Item_Hello_Class : MonoBehaviour
         
     }
     void Awake() {
-        PythonRunner.RunFile($"{Application.dataPath}/walk.py");
+        PythonRunner.RunFile($"{Application.dataPath}/Controllers/walk.py");
     }
 }

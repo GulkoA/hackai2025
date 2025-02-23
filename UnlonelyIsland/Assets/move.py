@@ -7,23 +7,23 @@ all_objects = UnityEngine.Object.FindObjectsOfType(UnityEngine.GameObject)
 
 for go in all_objects:
   # Check for GameObject named 'testScript'
-  # if go.name == "testScript":
-  #   Debug.Log(f"Found GameObject: {go.name}")
+  if go.name == "testScript":
+    Debug.Log(f"Found GameObject: {go.name}")
 
-  #   # Use GetComponent with Type.GetType to get the script
-  #   component_type = Type.GetType("samplescript, Assembly-CSharp")
-  #   if component_type:
-  #     sample_script = go.GetComponent(component_type)
+    # Use GetComponent with Type.GetType to get the script
+    component_type = Type.GetType("samplescript, Assembly-CSharp")
+    if component_type:
+      sample_script = go.GetComponent(component_type)
       
-  #     if sample_script:
-  #       Debug.Log("Samplescript component found.")
+      if sample_script:
+        Debug.Log("Samplescript component found.")
 
-  #       # Call the method using Invoke
-  #       sample_script.SendMessage("TestTheScript")
-  #     else:
-  #       Debug.Log("Samplescript component not found on 'testScript' GameObject.")
-  #   else:
-  #     Debug.Log("Type 'Samplescript' not found.")
+        # Call the method using Invoke
+        sample_script.SendMessage("TestTheScript")
+      else:
+        Debug.Log("Samplescript component not found on 'testScript' GameObject.")
+    else:
+      Debug.Log("Type 'Samplescript' not found.")
 
   # if go.name == "testScript":
   #   Debug.Log(f"Found GameObject: {go.name}")
