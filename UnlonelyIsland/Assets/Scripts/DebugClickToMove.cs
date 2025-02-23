@@ -1,3 +1,4 @@
+using Mono.Cecil;
 using UnityEngine;
 using UnityEngine.AI;
 
@@ -7,6 +8,7 @@ public class DebugClickToMove : MonoBehaviour
     private Vector3 housingArea;
     private Vector3 market;
     private Vector3 dock;
+    private Vector3 farm;
 
     private NavMeshAgent agent;
     [SerializeField] private Animator animator;
@@ -16,48 +18,44 @@ public class DebugClickToMove : MonoBehaviour
         agent = GetComponent<NavMeshAgent>();
 
         //1, 2, 3, for housing, shopping, hill options to raycast to.
-        housingArea = new Vector3(407.20f, 248.40f, 0.00f);
-        market = new Vector3(536.00f, 370.80f, 0.00f);
-        dock = new Vector3(836.00f, 382.00f, 0.00f);
+        housingArea = new Vector3(2.48f, 4.28f, -9.53f);
+        market = new Vector3(-17.03f, 8.09f, -10.14f);
+        dock = new Vector3(-47.63f, 3.32f, -10.69f);
+        farm = new Vector3(26.37f, 4.21f, 22.57f);
     }
 
     void Update()
     {
-        Ray ray;
-        RaycastHit hit;
 
         if (Input.GetKeyDown(KeyCode.Alpha1))
         {
-            ray = Camera.main.ScreenPointToRay(housingArea);
-            if (Physics.Raycast(ray, out hit))
-            {
-                agent.SetDestination(hit.point);
-                animator.SetTrigger("tWalk");
-            }
-        }
-        if (!agent.pathPending && agent.remainingDistance <= agent.stoppingDistance)
-        {
-            if (!agent.hasPath || agent.velocity.sqrMagnitude == 0f)
-            {
-                animator.SetTrigger("tIdle");
-            }
+            agent.SetDestination(housingArea);
         }
         else if (Input.GetKeyDown(KeyCode.Alpha2))
         {
-            ray = Camera.main.ScreenPointToRay(market);
-            if (Physics.Raycast(ray, out hit))
-            {
-                agent.SetDestination(hit.point);
-            }
+            agent.SetDestination(market);
         }
         else if (Input.GetKeyDown(KeyCode.Alpha3))
         {
-            ray = Camera.main.ScreenPointToRay(dock);
-            if (Physics.Raycast(ray, out hit))
-            {
-                agent.SetDestination(hit.point);
-            }
+            agent.SetDestination(dock);
         }
-
+        else if (Input.GetKeyDown(KeyCode.Alpha4))
+        {
+            agent.SetDestination(farm);
+        }
+    }
+    private void OnTriggerEnter(Collider other)
+    {
+        if (other.tag == "Farm")
+        {
+            animator.SetTrigger("tPerform");
+        }
+    }
+    private void OnTriggerExit(Collider other)
+    {
+        if (other.tag == "Farm")
+        {
+            animator.SetTrigger("tIdle");
+        }
     }
 }
