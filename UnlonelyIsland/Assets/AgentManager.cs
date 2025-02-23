@@ -22,7 +22,7 @@ public class AgentManager : MonoBehaviour
     {
         int start = 0;
         foreach (GameObject agent in agentArray) {
-            AgentInventory ai = GetComponent<AgentInventory>();
+            AgentInventory ai = agent.GetComponent<AgentInventory>();
             ai.AgentID = start;
             start++;
         }
