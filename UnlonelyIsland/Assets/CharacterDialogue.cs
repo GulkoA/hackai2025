@@ -14,12 +14,8 @@ public class CharacterDialogue : MonoBehaviour
         speechBubbleController.target = transform;
     }
 
-    void Update()
+    public void UpdateDialogue(string speech)
     {
-        // Example: Show dialogue when the player presses the space key
-        if (Input.GetKeyDown(KeyCode.Space))
-        {
-            speechBubbleController.SetDialogue("Hello, this is a speech bubble!");
-        }
+            speechBubbleController.SetDialogue(speech);
     }
 }
