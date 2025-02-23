@@ -41,13 +41,14 @@ public class NetworkManager : MonoBehaviour
         {
             pythonServerProcess = new Process();
             pythonServerProcess.StartInfo.FileName = "python"; // Update with the full path to your Python executable
-            pythonServerProcess.StartInfo.Arguments = Application.streamingAssetsPath + "/Scripts/network.py"; // Update path accordingly
+            // pythonServerProcess.StartInfo.Arguments = Application.streamingAssetsPath + "/Scripts/network.py"; // Update path accordingly
+            pythonServerProcess.StartInfo.Arguments = Application.streamingAssetsPath + "/../../python/humanoid_manager.py"; // Update path accordingly
             pythonServerProcess.StartInfo.UseShellExecute = false;
             pythonServerProcess.StartInfo.RedirectStandardOutput = true;
             pythonServerProcess.StartInfo.RedirectStandardError = true;
             pythonServerProcess.StartInfo.CreateNoWindow = true;
-            // pythonServerProcess.OutputDataReceived += (sender, args) => UnityEngine.Debug.Log("Python Server: " + args.Data);
-            // pythonServerProcess.ErrorDataReceived += (sender, args) => UnityEngine.Debug.LogError("Python Server Error: " + args.Data);
+            // //pythonServerProcess.OutputDataReceived += (sender, args) => UnityEngine.Debug.Log("Python Server: " + args.Data);
+            // //pythonServerProcess.ErrorDataReceived += (sender, args) => UnityEngine.Debug.LogError("Python Server Error: " + args.Data);
             pythonServerProcess.Start();
             pythonServerProcess.BeginOutputReadLine();
             pythonServerProcess.BeginErrorReadLine();
