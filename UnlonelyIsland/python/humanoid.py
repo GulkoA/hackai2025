@@ -5,8 +5,8 @@ import numpy as np
 import dbm
 
 locations_descriptions = {
-    'dock': 'Walk to the fishing dock where you can catch fish',
-    'farm': 'Walk to the farm where you can grow tomatoes and other vegetables',
+    'dock': 'Walk to the fishing dock where you can catch fish if you are a fisherman',
+    'farm': 'Walk to the farm where you can farm tomatoes if you are a farmer',
     'housing': 'Walk to the housing area where you can rest and recover your energy',
     'market': 'Walk to the market where you can trade goods and cook meals',
 }
@@ -14,6 +14,7 @@ locations_descriptions = {
 action_descriptions = {
     'start_fishing': 'Start fishing at the dock',
     'start_farming': 'Start farming at the farm',
+    'start_cooking': 'Start cooking using tomatoes and fish. You need 1 tomato and 1 fish to cook a meal',
     'sleep': 'Go to sleep at the housing area',
 }
 
@@ -22,89 +23,52 @@ class Action(BaseModel):
     intention: str
     mood: str
 
+class Context(BaseModel):
+    inventory: dict[str, int] = {
+        "fish": 0,
+        "tomatoes": 0,
+        "meals": 0,
+        "gold": 0
+    }
+    vitals: dict[str, int] = {
+        "hunger": 0,
+        "stamina": 0
+    }
+    location: str
+    agents_nearby: list[int]
+    actions_available: list[str]
+
 class Humanoid():
-    def __init__(self, model: str, id: str, name="", occupation=""):
-        with dbm.open("humanoid.db", "c") as db:
-            if id in db:
-                if 'running' in db[id] and db[id]['running'] == True:
-                    raise ValueError(f"Humanoid {id} is already running, cannot run the same humanoid twice.")
-                # self.load(db[id])
-            else:
-                self.init(id, name, occupation)
-                # self.save(db)
-
-            # db[id]['running'] = True
-
+    def __init__(self, model: str, id: str, name: str, occupation: str):
         self.model = model
-
-    def init(self, id, name, occupation):
         self.id = id
         self.name = name
         self.occupation = occupation
         self.personality_vector = np.random.rand(5)
-        self.vitals = {
-            'hunger': 0.1, # more hungry = wants to eat
-            'stamina': 1, # more stamina = more energy
-        }
-        self.inventory = {
-            'fish': 0,
-            'tomatoes': 0,
-            'meals': 0,
-            'gold': 100,
-        }
-        self.location = 'farm'
-        self.relations_summary = {
-            "You have no friends yet"
-        }
+        
         self.lifetime_summary = {
             "You were just born"
         }
         self.yesterday_summary = {
             "You did not exist yesterday"
         }
+        self.relations_summary = {
+            "You have no relations yet"
+        }
 
         self.history = {
-            'context': [ 
-            ],
+            'actions': [],
             'conversation': [],
         }
 
-    def save(self, db):
-        db[self.id] = {
-            'name': self.name,
-            'occupation': self.occupation,
-            'personality_vector': self.personality_vector,
-            'vitals': self.vitals,
-            'inventory': self.inventory,
-            'location': self.location,
-            'relations_summary': self.relations_summary,
-            'lifetime_summary': self.lifetime_summary,
-            'yesterday_summary': self.yesterday_summary,
-        }
 
-    def load(self, data):
-        self.name = data['name']
-        self.occupation = data['occupation']
-        self.personality_vector = data['personality_vector']
-        self.vitals = data['vitals']
-        self.inventory = data['inventory']
-        self.location = data['location']
-        self.relations_summary = data['relations_summary']
-        self.lifetime_summary = data['lifetime_summary']
-        self.yesterday_summary = data['yesterday_summary']
-
-    def quit(self):
-        with dbm.open("humanoid.db", "c") as db:
-            db[self.id]['running'] = False
-            self.save(db)
-
-    def summary_prompt(self):
+    def summary_prompt(self, context: Context):
         return f"""
         You are {self.name}, a {self.occupation} on the mechanical island. You can walk, interact with other humanoids, and trade fish, tomatoes, and buy food at the market. You CANNOT eat raw fish or tomatoes, only cooked meals. Your goal is to survive and thrive on the island.
-        You have {self.inventory['fish']} fish, {self.inventory['tomatoes']} tomatoes, and {self.inventory['gold']} gold.
-        You are at the {self.location}.
-        Your hunger: {self.vitals['hunger']} (you are {1 - self.vitals['hunger']} full)
-        Your stamina: {self.vitals['stamina']} (you are {self.vitals['stamina'] * 100}% energetic)
+        You have {context.inventory['fish']} fish, {context.inventory['tomatoes']} tomatoes, and {context.inventory['gold']} gold. THERE ARE NO OTHER RESOURCES AVAILABLE.
+        You are at the {context.location}.
+        Your hunger: {context.vitals['hunger']} (you are {100 - context.vitals['hunger'] * 100}% full)
+        Your stamina: {context.vitals['stamina']} (you are {context.vitals['stamina'] * 100}% energetic)
 
         Lifetime: {self.lifetime_summary}
         Yesterday: {self.yesterday_summary}
@@ -143,18 +107,17 @@ class Humanoid():
             "additionalProperties": False,
         }
 
-    def select_action(self, message, actions_available, conversations_available):
+    def prompt_agent_action(self, context: Context):
         messages = [
-            *self.history['context'],
-            *self.history['conversation'],
-            {'role': 'system', 'content': self.summary_prompt()},
-            {'role': 'user', 'content': message},
+            *self.history['actions'],
+            {'role': 'system', 'content': self.summary_prompt(context)},
+            {'role': 'user', 'content': "What would you like to do next? Please select the best action per your personality."},
         ]
 
         response: ChatResponse = chat(
-            'llama3.2',
+            model=self.model,
             messages=messages,
-            format=self.generate_action_format(actions_available, conversations_available),
+            format=self.generate_action_format(context.actions_available, context.agents_nearby),
         )
 
         try:
@@ -164,7 +127,5 @@ class Humanoid():
             print('Performing action:', action_data.action)
         except Exception as e:
             print('Invalid action format in response:', response.message.content, e)
-
-        # self.quit()
 
         return action_data
