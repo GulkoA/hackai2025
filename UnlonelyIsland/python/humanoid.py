@@ -48,6 +48,9 @@ class Context(BaseModel):
     agents_nearby: list[int]
     actions_available: list[str]
 
+class PsycologicalPortrait(BaseModel):
+    mood: str
+
 class Humanoid():
     def __init__(self, ai_model: str, id: str, name: str, occupation: str):
         self.ai_model = ai_model
@@ -297,3 +300,18 @@ class Humanoid():
         })
 
         # return conversation_data
+
+    def generate_character_context(self):
+        
+        response: ChatResponse = chat(
+            model=self.ai_model,
+            messages=[f'You are {self.name} who works as {self.occupation}. Based on the OCEAN personality model(the Big Five personality traits) your openness:{self.personality_vector[0]}, conscientiousness:{self.personality_vector[1]}, extraversion:{self.personality_vector[2]}, agreeableness:{self.personality_vector[3]}, and neuroticism:{self.personality_vector[4]}. Give a physcological portret for you.'],
+        )
+
+        try:
+            conversation_data = PsycologicalPortrait.model_validate_json(response.message.content)
+            print(f"Model feels {conversation_data.mood}")
+        except Exception as e:
+            print('Invalid conversation format in response:', response.message.content, e)
+
+        return conversation_data
