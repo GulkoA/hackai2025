@@ -44,18 +44,4 @@ public class DebugClickToMove : MonoBehaviour
             agent.SetDestination(farm);
         }
     }
-    private void OnTriggerEnter(Collider other)
-    {
-        if (other.tag == "Farm")
-        {
-            animator.SetTrigger("tPerform");
-        }
-    }
-    private void OnTriggerExit(Collider other)
-    {
-        if (other.tag == "Farm")
-        {
-            animator.SetTrigger("tIdle");
-        }
-    }
 }
