@@ -2,11 +2,43 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Net.Sockets;
 using System.Text;
 using System.Threading;
 using NUnit.Framework;
 using UnityEngine;
+
+[Serializable]
+public class SerializableDictionary
+{
+    public string[] keys;
+    public string[] values;
+
+    public SerializableDictionary(Dictionary<string, object> dict)
+    {
+        keys = dict.Keys.ToArray();
+        values = dict.Values.Select(v => JsonUtility.ToJson(v)).ToArray();
+    }
+
+    public Dictionary<string, object> ToDictionary()
+    {
+        var dict = new Dictionary<string, object>();
+        for (int i = 0; i < keys.Length; i++)
+        {
+            dict[keys[i]] = JsonUtility.FromJson<object>(values[i]);
+        }
+        return dict;
+    }
+}
+
+[Serializable]
+public class CommandData
+{
+    public int id;
+    public string command;
+    public Dictionary<string, object> parameters;
+}
 
 public class NetworkManager : MonoBehaviour
 {
@@ -42,7 +74,7 @@ public class NetworkManager : MonoBehaviour
             pythonServerProcess = new Process();
             pythonServerProcess.StartInfo.FileName = "python"; // Update with the full path to your Python executable
             // pythonServerProcess.StartInfo.Arguments = Application.streamingAssetsPath + "/Scripts/network.py"; // Update path accordingly
-            pythonServerProcess.StartInfo.Arguments = Application.streamingAssetsPath + "/../../python/humanoid_manager.py"; // Update path accordingly
+            // pythonServerProcess.StartInfo.Arguments = Application.streamingAssetsPath + "/../../python/humanoid_manager.py"; // Update path accordingly
             pythonServerProcess.StartInfo.UseShellExecute = false;
             pythonServerProcess.StartInfo.RedirectStandardOutput = true;
             pythonServerProcess.StartInfo.RedirectStandardError = true;
@@ -76,7 +108,6 @@ public class NetworkManager : MonoBehaviour
             receiveThread.Start();
 
             // Example: Send a message to the server
-            SendMessage("Hello from Unity");
         }
         catch (Exception e)
         {
@@ -101,6 +132,20 @@ public class NetworkManager : MonoBehaviour
         }
     }
 
+    public void SendCommand(string command, Dictionary<string, object> parameters)
+    {
+        var commandData = new CommandData
+        {
+            id = 1,
+            command = command,
+            parameters = parameters
+        };
+
+        string message = JsonUtility.ToJson(commandData);
+        UnityEngine.Debug.Log($"Sending: {message}");
+        SendMessage(message);
+    }
+
     void ReceiveMessages()
     {
         try
@@ -112,15 +157,12 @@ public class NetworkManager : MonoBehaviour
                 if (bytesRead > 0)
                 {
                     string message = Encoding.ASCII.GetString(buffer, 0, bytesRead);
+                    CommandData data = JsonUtility.FromJson<CommandData>(message);
+                    UnityEngine.Debug.Log($"Received: {message} for {data.id} {data.command} with params {data.parameters}");
+                    //Dictionary<string, object> parameters = data.parameters.ToDictionary();
 
-                    // Parse the JSON message
-                    Data data = JsonUtility.FromJson<Data>(message);
-
-                    // Use the parsed data
-                    AgentManager.Instance.DistributeToAgent(data.id, data.command, data.parameters); // Assuming you want to pass the id
-
-                    UnityEngine.Debug.Log($"Received: {message}");
-                    UnityEngine.Debug.Log($"ID: {data.id}, Destination: {data.command}");
+                    AgentManager.Instance.DistributeToAgent(data.id, data.command, data.parameters);
+                    UnityEngine.Debug.Log($"Received: {message} for {data.id} {data.command}");
                 }
             }
         }
@@ -141,12 +183,4 @@ public class NetworkManager : MonoBehaviour
             pythonServerProcess.Kill();
         }
     }
-}
-
-[Serializable]
-public class Data
-{
-    public int id;
-    public string command;
-    public string parameters;
 }

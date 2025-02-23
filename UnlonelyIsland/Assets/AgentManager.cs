@@ -1,4 +1,5 @@
 using UnityEngine;
+using System.Collections.Generic;
 
 public class AgentManager : MonoBehaviour
 {
@@ -47,7 +48,7 @@ public class AgentManager : MonoBehaviour
         NetworkManager.Instance.SendAction(jsonData);
     }
 
-    public void DistributeToAgent(int id, string command, string parameters)
+    public void DistributeToAgent(int id, string command, Dictionary<string, object> parameters)
     {
         if (id < agentArray.Length)
         {

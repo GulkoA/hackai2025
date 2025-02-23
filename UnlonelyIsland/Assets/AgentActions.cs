@@ -1,17 +1,21 @@
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.AI;
 
 public class AgentActions : MonoBehaviour
 {
     [SerializeField] private Animator animator;
-    public void InterpretData(string command, string parameters)
+    public void InterpretData(string command, Dictionary<string, object> parameters)
     {
+        UnityEngine.Debug.Log($"Interpreting command: {command} with parameters: {JsonUtility.ToJson(parameters)}");
         NavMeshAgent agent = GetComponent<NavMeshAgent>();
-        if (command.Equals("start_walk"))
+        
+        if (command.Equals("start_walk") && parameters.ContainsKey("dest"))
         {
-            switch (parameters)
+            string destination = parameters["dest"].ToString();
+            switch (destination)
             {
                 case "housing":
                     agent.SetDestination(new Vector3(2.48f, 4.28f, -9.53f));
@@ -28,34 +32,27 @@ public class AgentActions : MonoBehaviour
                 default: break;
             }
         }
-        else if (command.Equals("start_action"))
+        else if (command.Equals("start_action") && parameters.ContainsKey("action"))
         {
-            switch (parameters)
+            string action = parameters["action"].ToString();
+            switch (action)
             {
                 case "fishing":
-                    StartCoroutine(startAction(10, "tPerform", parameters));
-                    break;
                 case "farming":
-                    StartCoroutine(startAction(10, "tPerform", parameters));
-                    break;
                 case "cooking":
-                    StartCoroutine(startAction(10, "tPerform", parameters));
-                    break;
                 case "eating":
-                    StartCoroutine(startAction(10, "tPerform", parameters));
+                    StartCoroutine(startAction(10, "tPerform", action));
                     break;
                 default: break;
             }
         }
-        else if (command.Equals("start_conversation"))
+        else if (command.Equals("start_conversation") || command.Equals("say_in_conversation"))
         {
-            CharacterDialogue cd = GetComponent<CharacterDialogue>();
-            cd.UpdateDialogue(parameters);
-        }
-        else if (command.Equals("say_in_conversation"))
-        {
-            CharacterDialogue cd = GetComponent<CharacterDialogue>();
-            cd.UpdateDialogue(parameters);
+            if (parameters.ContainsKey("dialogue"))
+            {
+                CharacterDialogue cd = GetComponent<CharacterDialogue>();
+                cd.UpdateDialogue(parameters["dialogue"].ToString());
+            }
         }
     }
     private void OnTriggerEnter(Collider other)
