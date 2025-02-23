@@ -1,5 +1,7 @@
 from ollama import ChatResponse, chat
 import rich
+from pydantic import BaseModel
+import numpy as np
 
 locations_descriptions = {
     'dock': 'Walk to the fishing dock where you can catch fish',
@@ -14,9 +16,37 @@ action_descriptions = {
     'sleep': 'Go to sleep at the housing area',
 }
 
-class Agent():
+class Action(BaseModel):
+    action: str
+    intention: str
+    mood: str
+
+class Humanoid():
     def __init__(self, model: str):
         self.model = model
+        self.name = "Steeve"
+        self.occupation = "farmer"
+        self.personality_vector = np.random.rand(5)
+        self.vitals = {
+            'hunger': 0.5, # more hungry = wants to eat
+            'stamina': 0.5, # more stamina = more energy
+        }
+        self.inventory = {
+            'fish': 0,
+            'tomatoes': 0,
+            'gold': 0,
+        }
+        self.location = 'farm'
+        self.relations_summary = {
+            "You have no friends yet"
+        }
+        self.lifetime_summary = {
+            "You were just born"
+        }
+        self.yesterday_summary = {
+            "You did not exist yesterday"
+        }
+
         self.history = {
             'context': [
                 {'role': "system", 'content': "You are Steeve, a farmer on an island. You can walk, interact with other humanoids, and trade fish, tomatoes, and buy food at the market. Your goal is to survive and thrive on the island."},
@@ -44,6 +74,7 @@ class Agent():
                 "intention": {
                     "type": "string",
                     "description": "Why did you decide to do this action? Be as descriptive and specific as possible.",
+                    "minLength": 25,
                 },
                 "mood": {
                     "type": "string",
@@ -51,7 +82,8 @@ class Agent():
                     "enum": ["happy", "sad", "angry", "neutral"],
                 }
             },
-            "required": ["intention", "mood", "action"]
+            "required": ["intention", "mood", "action"],
+            "additionalProperties": False,
         }
 
     def chat(self, message, actions_available, conversations_available):
@@ -70,9 +102,9 @@ class Agent():
         )
 
         try:
-            action_data = response.message.content
-            print('Intention:', action_data['intention'])
-            print('Mood:', action_data['mood'])
-            print('Performing action:', action_data['action'])
+            action_data = Action.model_validate_json(response.message.content)
+            print('Intention:', action_data.intention)
+            print('Mood:', action_data.mood)
+            print('Performing action:', action_data.action)
         except Exception as e:
             print('Invalid action format in response:', response.message.content, e)

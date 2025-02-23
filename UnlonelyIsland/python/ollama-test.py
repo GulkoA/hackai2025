@@ -1,4 +1,4 @@
-from agent import Agent
+from UnlonelyIsland.python.humanoid import Agent
 
 agent = Agent(
   model='deepseek-r1'
