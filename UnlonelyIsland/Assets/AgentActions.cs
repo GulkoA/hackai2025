@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using UnityEngine;
 using UnityEngine.AI;
@@ -32,13 +33,16 @@ public class AgentActions : MonoBehaviour
             switch (parameters)
             {
                 case "fishing":
-                    StartCoroutine(startAction(3, "tPerform", parameters));
+                    StartCoroutine(startAction(10, "tPerform", parameters));
                     break;
                 case "farming":
-                    StartCoroutine(startAction(3, "tPerform", parameters));
+                    StartCoroutine(startAction(10, "tPerform", parameters));
                     break;
                 case "cooking":
-                    StartCoroutine(startAction(3, "tPerform", parameters));
+                    StartCoroutine(startAction(10, "tPerform", parameters));
+                    break;
+                case "eating":
+                    StartCoroutine(startAction(10, "tPerform", parameters));
                     break;
                 default: break;
             }
@@ -67,24 +71,30 @@ public class AgentActions : MonoBehaviour
     }
     private IEnumerator startAction(float actionTime, string animationName, string taskName = null)
     {
-        if (taskName is not null)
-        {
-            Debug.Log(taskName + " task started.");
-        }
-        else
-        {
-            Debug.Log("Task started.");
-        }
         animator.SetTrigger(animationName);
+        AgentInventory ai = GetComponent<AgentInventory>();
         yield return new WaitForSeconds(actionTime);
+        switch (taskName)
+            {
+                case "fishing":
+                    ai.NumFish += UnityEngine.Random.Range(1, 11);
+                    break;
+                case "farming":
+                    ai.NumTomatoes += UnityEngine.Random.Range(1, 11);
+                    break;
+                case "cooking":
+                    int remove = Mathf.Min(ai.NumTomatoes, ai.NumFish, 5);
+                    ai.NumMeals += remove;
+                    ai.NumFish -= remove;
+                    ai.NumTomatoes -= remove;
+                    break;
+                case "eating":
+                    ai.NumMeals--;
+                    ai.Vitals -= UnityEngine.Random.Range(2, 9);
+                    ai.Vitals = Mathf.Clamp(ai.Vitals, 0 , 10);
+                    break;
+                default: break;
+            }
         animator.SetTrigger("tIdle");
-        if (taskName is not null)
-        {
-            Debug.Log(taskName + " task ended.");
-        }
-        else
-        {
-            Debug.Log("Task ended.");
-        }
     }
 }
