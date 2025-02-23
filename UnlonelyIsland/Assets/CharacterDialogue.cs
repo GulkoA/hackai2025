@@ -1,3 +1,4 @@
+using System.Collections;
 using UnityEngine;
 
 public class CharacterDialogue : MonoBehaviour
@@ -16,6 +17,11 @@ public class CharacterDialogue : MonoBehaviour
 
     public void UpdateDialogue(string speech)
     {
-            speechBubbleController.SetDialogue(speech);
+            Chat(5.0f, speech);
+    }
+    private IEnumerator Chat(float time, string speech) {
+        speechBubbleController.SetDialogue(speech);
+        yield return new WaitForSeconds(time);
+        speechBubbleController.SetDialogue("");
     }
 }
