@@ -48,8 +48,9 @@ public class AgentManager : MonoBehaviour
         NetworkManager.Instance.SendAction(jsonData);
     }
 
-    public void DistributeToAgent(int id, string command, Dictionary<string, object> parameters)
+    public void DistributeToAgent(int id, string command, string parameters)
     {
+        UnityEngine.Debug.Log($"Distributing data to agent {id} with command: {command} and parameters: {parameters}");
         if (id < agentArray.Length)
         {
             Debug.Log("Distributing data to agent...");

@@ -37,7 +37,7 @@ public class CommandData
 {
     public int id;
     public string command;
-    public Dictionary<string, object> parameters;
+    public string parameters;
 }
 
 public class NetworkManager : MonoBehaviour
@@ -138,7 +138,7 @@ public class NetworkManager : MonoBehaviour
         {
             id = 1,
             command = command,
-            parameters = parameters
+            parameters = JsonUtility.ToJson(new SerializableDictionary(parameters))
         };
 
         string message = JsonUtility.ToJson(commandData);
