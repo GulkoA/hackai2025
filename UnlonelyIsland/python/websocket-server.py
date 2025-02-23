@@ -21,7 +21,7 @@ class WebsocketServer:
 
       try:
           self.conn, addr = server_socket.accept()
-          self.send_command(0, "start_walk", "dock")
+          # self.send_command(0, "start_walk", "dock")
           while True:
               data = self.conn.recv(1024)
               if not data:

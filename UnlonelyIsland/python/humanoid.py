@@ -75,7 +75,7 @@ class Humanoid():
         }
         self.partner = None
 
-    def prompt_agent_action(self, context: Context):
+    def prompt_agent_action(self, context: Context) -> Action:
         """
         Prompt agent to generate the next action
         """
