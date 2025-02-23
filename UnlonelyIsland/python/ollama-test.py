@@ -1,7 +1,9 @@
-from UnlonelyIsland.python.humanoid import Agent
+from humanoid import Humanoid
 
-agent = Agent(
-  model='deepseek-r1'
+agent = Humanoid(
+  model='deepseek-r1',
+  name='Steeve',
+  occupation='farmer',
 )
 
-agent.chat("You are 10/10 full and 4/10 stamina. What would you like to do?", actions_available=[], conversations_available=[])
+agent.select_action("What would you like to do?", actions_available=[], conversations_available=[])

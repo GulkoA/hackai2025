@@ -22,19 +22,19 @@ class Action(BaseModel):
     mood: str
 
 class Humanoid():
-    def __init__(self, model: str):
+    def __init__(self, model: str, name, occupation):
         self.model = model
-        self.name = "Steeve"
-        self.occupation = "farmer"
+        self.name = name
+        self.occupation = occupation
         self.personality_vector = np.random.rand(5)
         self.vitals = {
-            'hunger': 0.5, # more hungry = wants to eat
-            'stamina': 0.5, # more stamina = more energy
+            'hunger': 0.1, # more hungry = wants to eat
+            'stamina': 1, # more stamina = more energy
         }
         self.inventory = {
             'fish': 0,
             'tomatoes': 0,
-            'gold': 0,
+            'gold': 100,
         }
         self.location = 'farm'
         self.relations_summary = {
@@ -48,11 +48,23 @@ class Humanoid():
         }
 
         self.history = {
-            'context': [
-                {'role': "system", 'content': "You are Steeve, a farmer on an island. You can walk, interact with other humanoids, and trade fish, tomatoes, and buy food at the market. Your goal is to survive and thrive on the island."},
+            'context': [ 
             ],
             'conversation': [],
         }
+
+    def summary_prompt(self):
+        return f"""
+        You are {self.name}, a {self.occupation} on the mechanical island. You can walk, interact with other humanoids, and trade fish, tomatoes, and buy food at the market. Your goal is to survive and thrive on the island.
+        You have {self.inventory['fish']} fish, {self.inventory['tomatoes']} tomatoes, and {self.inventory['gold']} gold.
+        You are at the {self.location}.
+        Your hunger: {self.vitals['hunger']} (you are {1 - self.vitals['hunger']} full)
+        Your stamina: {self.vitals['stamina']} (you are {self.vitals['stamina'] * 100}% energetic)
+
+        Lifetime: {self.lifetime_summary}
+        Yesterday: {self.yesterday_summary}
+        Relations: {self.relations_summary}
+        """
 
     def generate_action_format(self, actions_available, conversations_available):
         available_action_descriptions = {}
@@ -86,15 +98,14 @@ class Humanoid():
             "additionalProperties": False,
         }
 
-    def chat(self, message, actions_available, conversations_available):
+    def select_action(self, message, actions_available, conversations_available):
         messages = [
             *self.history['context'],
             *self.history['conversation'],
+            {'role': 'system', 'content': self.summary_prompt()},
             {'role': 'user', 'content': message},
         ]
 
-        action_format = self.generate_action_format(actions_available, conversations_available)
-        rich.print(action_format)
         response: ChatResponse = chat(
             'llama3.2',
             messages=messages,
@@ -108,3 +119,5 @@ class Humanoid():
             print('Performing action:', action_data.action)
         except Exception as e:
             print('Invalid action format in response:', response.message.content, e)
+
+        return action_data
