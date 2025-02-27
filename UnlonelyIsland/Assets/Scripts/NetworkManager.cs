@@ -73,9 +73,6 @@ public class NetworkManager : MonoBehaviour
             receiveThread = new Thread(ReceiveMessages);
             receiveThread.IsBackground = true;
             receiveThread.Start();
-
-            // Example: Send a message to the server
-            SendMessage("Hello from Unity");
         }
         catch (Exception e)
         {
@@ -97,6 +94,7 @@ public class NetworkManager : MonoBehaviour
         if (stream != null) {
             byte[] data = Encoding.ASCII.GetBytes(context);
             stream.Write(data, 0, data.Length);
+            UnityEngine.Debug.Log("Context sent: " + context);
         }
     }
 
@@ -112,14 +110,22 @@ public class NetworkManager : MonoBehaviour
                 {
                     string message = Encoding.ASCII.GetString(buffer, 0, bytesRead);
 
-                    // Parse the JSON message
-                    Data data = JsonUtility.FromJson<Data>(message);
+                    try
+                    {
+                        // Attempt to parse the JSON message
+                        Data data = JsonUtility.FromJson<Data>(message);
 
-                    // Use the parsed data
-                    AgentManager.Instance.DistributeToAgent(data.id, data.command, data.parameters); // Assuming you want to pass the id
+                        // Use the parsed data
+                        AgentManager.Instance.DistributeToAgent(data.id, data.command, data.parameters); // Assuming you want to pass the id
 
-                    UnityEngine.Debug.Log($"Received: {message}");
-                    UnityEngine.Debug.Log($"ID: {data.id}, Destination: {data.command}");
+                        UnityEngine.Debug.Log($"Received: {message}");
+                        UnityEngine.Debug.Log($"ID: {data.id}, Destination: {data.command}");
+                    }
+                    catch (Exception jsonEx)
+                    {
+                        // If parsing fails, just output the message
+                        UnityEngine.Debug.Log($"Received non-JSON message: {message}");
+                    }
                 }
             }
         }
@@ -128,6 +134,7 @@ public class NetworkManager : MonoBehaviour
             UnityEngine.Debug.LogError($"Receive error: {e.Message}");
         }
     }
+
 
     void OnApplicationQuit()
     {

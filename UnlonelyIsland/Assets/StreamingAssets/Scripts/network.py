@@ -1,7 +1,12 @@
 ﻿import socket
-import json
+import sys
+import os
 
-def start_server():
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'AI Scripts')))
+
+from humanoid_manager import HumanoidManager
+
+def start_server(manager):
     server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     try:
         server_socket.bind(('localhost', 12345))
@@ -14,18 +19,19 @@ def start_server():
     try:
         conn, addr = server_socket.accept()
         print(f"Connected by {addr}")
-        data = {
-            "id": 0,
-            "command": "start_conversation",
-            "parameters": "Hey! This is a test!"
-        }
-        message = json.dumps(data)
-        conn.sendall(message.encode())
         while True:
             data = conn.recv(1024)
             if not data:
                 break
             print(f"Received: {data.decode()}")
+            try:
+                # Parse the JSON message
+                message = data.decode()
+                command_obj = json.loads(message)
+                manager.handle_command(command_obj["id"], command_obj["command"], command_obj["parameters"])
+            except json.JSONDecodeError as e:
+                print(f"Failed to decode JSON: {e}")
+            conn.sendall(data)
     except Exception as e:
         print(f"Server error: {e}")
     finally:
@@ -33,4 +39,5 @@ def start_server():
         server_socket.close()
 
 if __name__ == "__main__":
-    start_server()
+    manager = HumanoidManager()
+    start_server(manager)
