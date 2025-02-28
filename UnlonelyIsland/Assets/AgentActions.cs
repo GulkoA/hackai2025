@@ -9,7 +9,7 @@ public class AgentActions : MonoBehaviour
     public void InterpretData(string command, string parameters)
     {
         NavMeshAgent agent = GetComponent<NavMeshAgent>();
-        if (command.Equals("start_walk"))
+        if (command.Equals("walk"))
         {
             switch (parameters)
             {

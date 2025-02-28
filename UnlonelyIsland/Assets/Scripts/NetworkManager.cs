@@ -91,7 +91,8 @@ public class NetworkManager : MonoBehaviour
         }
     }
     public void SendAction(string context) {
-        if (stream != null) {
+        if (stream != null)
+        {
             byte[] data = Encoding.ASCII.GetBytes(context);
             stream.Write(data, 0, data.Length);
             UnityEngine.Debug.Log("Context sent: " + context);

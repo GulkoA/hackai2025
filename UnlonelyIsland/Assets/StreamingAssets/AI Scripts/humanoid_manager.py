@@ -1,18 +1,26 @@
+import json
 from humanoid import Humanoid, Context, Inventory, Action
 
 class HumanoidManager():
-    def __init__(self):
+    def __init__(self, server):
         # maps id to Humanoid
         self.humanoids: dict[int, Humanoid] = {}
-        self.server = None
+        self.server = server
 
     def server_command(self, id, command: str, parameters: dict):
+        message = {
+            "id": id,
+            "command": command,
+            "parameters": parameters
+        }
+        json_message = json.dumps(message)
+        print("Serialized JSON message:", json_message)
         if self.server:
-            self.server.send_command(id, command, parameters)
+            self.server.send_response(json_message)
 
     def prompt_agent_action(self, id, ctx):
-        context = Context.model_validate_json(ctx)
-
+        ctx_json = json.dumps(ctx)
+        context = Context.model_validate_json(ctx_json)
         if id not in self.humanoids:
             # create new agent
             self.humanoids[id] = Humanoid(
