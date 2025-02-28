@@ -94,10 +94,11 @@ class Humanoid():
             You are at the {context.location}. Decide what to do next based on your personality.
             """
         
-        def generate_action_format(actions_available, conversations_available):
+        def generate_action_format(actions_available, conversations_available, current_location):
             actions = {}
             for location, description in locations_descriptions.items():
-                actions[f"walk_to_{location}"] = description
+                if location != current_location:
+                    actions[f"walk_to_{location}"] = description
             for conversation in conversations_available:
                 actions[f"talk_to_{conversation}"] = f"Start a conversation with {conversation}"
             for action in actions_available:
@@ -135,7 +136,7 @@ class Humanoid():
         response: ChatResponse = chat(
             model=self.ai_model,
             messages=messages,
-            format=generate_action_format(context.actions_available, context.agents_nearby),
+            format=generate_action_format(context.actions_available, context.agents_nearby, context.location),
         )
 
         try:
